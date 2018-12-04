@@ -19,3 +19,10 @@ class TestKSBurden(TestCase):
         pval = rr.run_gene_test(n_iter=100)
         print(pval)
         self.fail()
+
+    def test_muiltithread(self):
+        rr = KSBurden(self.plink_file, self.pheno_file, self.variant_file)
+        pval = rr.run_multithreaded(n_iter=100)
+        print(pval)
+        self.fail()
+

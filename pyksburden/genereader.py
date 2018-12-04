@@ -103,9 +103,9 @@ class GeneReader(object):
         genotype_matrix[genotype_matrix == -1] = 0
         return genotype_matrix
 
-    def gene_iterator(self, genes=None) -> Tuple[np.array, str]:
+    def gene_iterator(self, genes=None) -> np.array:
         if genes is None:
             genes = self.genes
         for gene_name in genes:
             lg.debug('Getting gene %s', gene_name)
-            yield (self._read_gene(gene_name), gene_name)
+            yield self._read_gene(gene_name)

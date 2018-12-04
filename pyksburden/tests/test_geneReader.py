@@ -18,7 +18,7 @@ class TestGeneReader(TestCase):
     def test_gene_iterator(self):
         rr = GeneReader(self.plink_file, self.pheno_file, self.variant_file)
         gene_reader = rr.gene_iterator()
-        genotypes, gene = next(gene_reader)
+        genotypes = next(gene_reader)
         self.assertTrue(np.sum(genotypes) > 0)
         self.assertTrue(genotypes.shape[0] > 10)
         self.assertTrue(genotypes.shape[1] > 10)

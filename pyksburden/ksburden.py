@@ -3,6 +3,8 @@ import logging
 import numpy as np
 from pyksburden.genereader import GeneReader
 from typing import Callable, Tuple
+import multiprocessing.dummy as mp
+from itertools import repeat
 
 lg = logging.getLogger(__name__)
 
@@ -10,11 +12,13 @@ lg = logging.getLogger(__name__)
 class KSBurden(GeneReader):
 
     def __init__(self, plink_path: str, pheno_path: str,
-                 variant_path: str):
+                 variant_path: str,
+                 models: Tuple[str] = ('ks', 'cmc', 'burden')):
         GeneReader.__init__(self, plink_path, pheno_path, variant_path)
         self._models = {'ks': self._ks,
                         'burden': self._burden,
                         'cmc': self._cmc}
+        self.models = models
 
     def _permutation(self, genotypes: np.array,
                      fun: Callable[[np.array, np.array], float],
@@ -56,6 +60,46 @@ class KSBurden(GeneReader):
         cmc_cases = np.sum(sum_cases > 1)
         cmc_controls = np.sum(sum_controls > 1)
         return np.abs(cmc_cases - cmc_controls)
+
+    def run_multithreaded(self, n_threads: int = 1,
+                          genes=None, n_iter: int = 1000) -> pd.DataFrame:
+        if genes is None:
+            genes = self.genes
+        else:
+            assert len(genes) > 0
+        n_genes = len(self.genes)
+        lg.info('Testing %s genes', n_genes)
+
+        gene_iterator = self.gene_iterator(genes)
+        pool = mp.Pool(n_threads)
+        results = pool.starmap(self._run_models,
+                               zip(gene_iterator, repeat(n_iter)))
+        pool.close()
+        pool.join()
+        output = pd.DataFrame({'Gene': genes})
+        results = pd.DataFrame(results)
+        col_names = list(self.models)
+        col_names.append('num_var')
+        results.columns = col_names
+        output = pd.concat([output, results], axis=1)
+        if ('ks' in self.models) & ('burden' in self.models):
+            critical_tau = self._get_null((0.05 / n_genes) * 100)
+            output['ksburden'] = self._ksburden(results.ks.values,
+                                                results.burden.values,
+                                                critical_tau)
+        return output
+
+    def _run_models(self, genotypes: np.array,
+                    n_iter: int = 1000) -> np.array:
+
+        results = np.zeros(len(self.models)+1)
+        results[-1] = genotypes.shape[1]
+        for h, gene_test in enumerate(self.models):
+            results[h] = self._permutation(genotypes, self._models[gene_test],
+                                           n_iter)
+        return results
+
+
 
     def run_gene_test(self, models: Tuple[str] = ('ks', 'cmc', 'burden'),
                       genes=None, n_iter: int = 1000) -> pd.DataFrame:
