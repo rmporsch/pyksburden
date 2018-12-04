@@ -109,4 +109,3 @@ class GeneReader(object):
         for gene_name in genes:
             lg.debug('Getting gene %s', gene_name)
             yield (self._read_gene(gene_name), gene_name)
-

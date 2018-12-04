@@ -5,6 +5,7 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 
+
 class TestKSBurden(TestCase):
 
     def setUp(self):
@@ -18,4 +19,3 @@ class TestKSBurden(TestCase):
         pval = rr.run_gene_test(n_iter=100)
         print(pval)
         self.fail()
-

@@ -89,7 +89,8 @@ class KSBurden(GeneReader):
                                                 critical_tau)
         return output
 
-    def _ksburden(self, ks: np.array, burden: np.array, tau) -> np.array:
+    @staticmethod
+    def _ksburden(ks: np.array, burden: np.array, tau) -> np.array:
         alt = np.array([ks, burden])
         alt = np.sort(alt, axis=0)
 
@@ -104,12 +105,12 @@ class KSBurden(GeneReader):
 
     @staticmethod
     def _get_null(percentile: float) -> Tuple[float, float]:
-        lg.debug('Percentile for KSburden: %s', percentile)
+        lg.debug('Percentile for KS-Burden: %s', percentile)
         n_tests = 2
-        l = 1000
-        null = np.array([np.random.uniform(0, 1, size=l),
-                         np.random.uniform(0, 1, size=l)])
-        null = null.reshape(l, n_tests)
+        large_l = 1000
+        null = np.array([np.random.uniform(0, 1, size=large_l),
+                         np.random.uniform(0, 1, size=large_l)])
+        null = null.reshape(large_l, n_tests)
         null = np.sort(null, axis=0)
 
         def compute_w(x):
