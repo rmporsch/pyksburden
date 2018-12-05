@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from pyksburden.genereader import GeneReader
 from typing import Callable, Tuple
-import multiprocessing.dummy as mp
+import multiprocessing as mp
 from itertools import repeat
 
 lg = logging.getLogger(__name__)
@@ -18,6 +18,9 @@ class KSBurden(GeneReader):
         self._models = {'ks': self._ks,
                         'burden': self._burden,
                         'cmc': self._cmc}
+        for m in models:
+            if m not in self._models.keys():
+                raise ValueError("%s is not a valid model name" % m)
         self.models = models
 
     def _permutation(self, genotypes: np.array,

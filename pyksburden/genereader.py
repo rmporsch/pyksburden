@@ -95,8 +95,10 @@ class GeneReader(object):
         p = len(marker)
         assert p > 3
         genotype_matrix = np.zeros((self.n, p))
+        reader = PyPlink(self.plink_path)
         u = 0
-        for i, g in self.bfile.iter_geno_marker(marker):
+        lg.info('Reading %s', gene)
+        for i, g in reader.iter_geno_marker(marker):
             genotype_matrix[:, u] = g
             u += 1
             lg.debug('Processed variant %s', i)
