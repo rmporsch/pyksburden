@@ -34,10 +34,9 @@ if __name__ == '__main__':
     models = args.tests.split(',')
     lg.info('Running %s tests: %s', len(models), args.tests)
 
-    gene_runner = KSBurden(args.bfile, args.pheno, args.variants,
-                           models=tuple(models))
+    gene_runner = KSBurden(args.bfile, args.pheno, args.variants)
 
     lg.info('Starting')
-    output = gene_runner.run_multithreaded(args.th, n_iter=args.iter)
+    output = gene_runner.run_models(args.th, n_iter=args.iter)
     lg.info('Finished tests')
     output.to_csv(args.out+'.tsv', sep='\t')

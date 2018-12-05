@@ -28,6 +28,7 @@ class GeneReader(object):
         self.variants = self._get_var(self.variant_path)
         self.genes = self.variants.gene.unique()
         self.pheno = self._get_pheno(pheno_path)
+        self.bfile.close()
 
     def _get_var(self, variant_path: str) -> pd.DataFrame:
         dat = pd.read_table(variant_path, header=None)
@@ -103,6 +104,7 @@ class GeneReader(object):
             u += 1
             lg.debug('Processed variant %s', i)
         genotype_matrix[genotype_matrix == -1] = 0
+        reader.close()
         return genotype_matrix
 
     def gene_iterator(self, genes=None) -> np.array:

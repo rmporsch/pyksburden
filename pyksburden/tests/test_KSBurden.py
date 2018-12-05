@@ -22,7 +22,7 @@ class TestKSBurden(TestCase):
 
     def test_muiltithread(self):
         rr = KSBurden(self.plink_file, self.pheno_file, self.variant_file)
-        pval = rr.run_multithreaded(n_iter=100)
+        pval = rr.run_models(n_iter=100)
         print(pval)
         self.fail()
 
