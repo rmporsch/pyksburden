@@ -13,11 +13,13 @@ lg = logging.getLogger(__name__)
 class Models(GeneReader):
 
     def __init__(self, plink_path: str, pheno_path: str, variant_path: str,
-                 models: Tuple[str] = ('ks', 'cmc', 'burden')):
+                 models: Tuple[str] = ('ks', 'cmc', 'burden'),
+                 min_iter: int = 100):
         GeneReader.__init__(self, plink_path, pheno_path, variant_path)
         self._models = {'ks': self._ks,
                         'burden': self._burden,
                         'cmc': self._cmc}
+        self._min_iter = min_iter
         for m in models:
             if m not in self._models.keys():
                 raise ValueError("%s is not a valid model name" % m)
@@ -29,12 +31,20 @@ class Models(GeneReader):
         case_control_index = copy.copy(self.case_controls)
         stat = fun(genotypes, case_control_index)
 
-        null = np.zeros(n_iter)
+        null = 0
+        more_threshold = True
         for i in range(n_iter):
             np.random.shuffle(case_control_index)
-            null[i] = fun(genotypes, case_control_index)
+            null_stat = fun(genotypes, case_control_index)
+            if null_stat >= stat:
+                null += 1
+            if (i >= self._min_iter) & more_threshold:
+                pval = (null + 1) / (n_iter + 1)
+                more_threshold = False
+                if pval >= 0.05:
+                    break
 
-        pval = (sum(null >= stat) + 1) / (n_iter + 1)
+        pval = (null + 1) / (n_iter + 1)
         return pval
 
     @staticmethod
