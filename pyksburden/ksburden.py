@@ -6,6 +6,7 @@ from typing import Callable, Tuple
 import multiprocessing as mp
 from itertools import repeat
 import copy
+from scipy.stats import chi2
 
 lg = logging.getLogger(__name__)
 
@@ -136,6 +137,9 @@ class KSBurden(object):
             output['ksburden'] = self._ksburden(results.ks.values,
                                                 results.burden.values,
                                                 critical_tau)
+            output['ksburden_fisher'] = self._fisher_combination(
+                results.ks.values,
+                results.burden.values)
         return output
 
     @staticmethod
@@ -169,3 +173,9 @@ class KSBurden(object):
         c1 = np.percentile(w[:, 0], percentile)
         c2 = np.percentile(w[:, 1], percentile)
         return c1, c2
+
+    @staticmethod
+    def _fisher_combination(p1: float, p2: float):
+        chi = -2*(np.log(p1) + np.log(p2))
+        return 1-chi2.cdf(chi, df=4)
+

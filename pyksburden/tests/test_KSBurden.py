@@ -14,15 +14,10 @@ class TestKSBurden(TestCase):
         self.variant_file = 'data/chr22_rare_test_data.list'
         self.pheno_file = 'data/heartattack_male_60_simple.csv'
 
-    def test_run_gene_test(self):
-        rr = KSBurden(self.plink_file, self.pheno_file, self.variant_file)
-        pval = rr.run_gene_test(n_iter=100)
-        print(pval)
-        self.fail()
-
     def test_muiltithread(self):
         rr = KSBurden(self.plink_file, self.pheno_file, self.variant_file)
         pval = rr.run_models(n_iter=100)
         print(pval)
+        pval.to_csv('test_results.csv')
         self.fail()
 
