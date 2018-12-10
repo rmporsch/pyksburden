@@ -29,6 +29,14 @@ class Models(GeneReader):
     def _permutation(self, genotypes: np.array,
                      fun: Callable[[np.array, np.array], float],
                      n_iter: int) -> float:
+        """
+        Permutation for a given test.
+
+        :param genotypes: numpy array with the genotypes
+        :param fun: function with two arguments, case and control arrays
+        :param n_iter: number of maximal iterations
+        :return: p-value
+        """
         case_control_index = copy.copy(self.case_controls)
         stat = fun(genotypes, case_control_index)
 
@@ -49,10 +57,23 @@ class Models(GeneReader):
         return pval
 
     @staticmethod
-    def _split(arr: np.array, cond: np.array):
-        return [arr[cond], arr[~cond]]
+    def _split(arr: np.array, cond: np.array) -> Tuple:
+        """
+        Split numpy array into cases and control
+
+        :param arr: numpy array with genotypes
+        :param cond: numpy array
+        :return: Tuple of cases and control arrays
+        """
+        return arr[cond], arr[~cond]
 
     def _ks(self, x: np.array, cond: np.array) -> float:
+        """
+        KS Test
+        :param x: numpy array of the genoytpes
+        :param cond: case control status
+        :return: KS Statistics
+        """
         cases, controls = self._split(x, cond)
         sum_cases = np.sum(cases)
         sum_controls = np.sum(controls)
@@ -62,12 +83,24 @@ class Models(GeneReader):
         return stat
 
     def _burden(self, x: np.array, cond: np.array) -> float:
+        """
+        Simple Burden test.
+        :param x: numpy array of the genoytpes
+        :param cond: case control status
+        :return: Burden test statistic
+        """
         cases, controls = self._split(x, cond)
         sum_cases = np.sum(cases)
         sum_controls = np.sum(controls)
         return np.abs(sum_cases - sum_controls)
 
     def _cmc(self, x: np.array, cond: np.array) -> float:
+        """
+        Simple Burden test.
+        :param x: numpy array of the genoytpes
+        :param cond: case control status
+        :return: CMC test statistic
+        """
         cases, controls = self._split(x, cond)
         sum_cases = np.sum(cases, axis=0)
         sum_controls = np.sum(controls, axis=0)
@@ -77,7 +110,12 @@ class Models(GeneReader):
 
     def _run_models(self, genotypes: np.array,
                     n_iter: int = 1000) -> np.array:
-
+        """
+        Run all models for a given genotype matrix
+        :param genotypes: numpy array of genotypes
+        :param n_iter: number of iterations
+        :return: array with the pvalues of the tests and number of variants
+        """
         results = np.zeros(len(self.models)+1)
         results[-1] = genotypes.shape[1]
         for h, gene_test in enumerate(self.models):
@@ -86,6 +124,12 @@ class Models(GeneReader):
         return results
 
     def run_gene(self, gene_name: str, n_iter: int = 1000) -> np.array:
+        """
+        Run a single gene with pre-specified models
+        :param gene_name: string name of the gene
+        :param n_iter:  number of iteration for the permuation
+        :return: array with the results
+        """
         gene_iterator = self.gene_iterator([gene_name])
         genotypes = next(gene_iterator)
         output = self._run_models(genotypes, n_iter)
@@ -95,6 +139,17 @@ class Models(GeneReader):
 def multi_gene(plink_path: str, pheno_path: str, variant_path,
                gene: str, models: Tuple[str] = ('ks', 'burden', 'cmc'),
                n_iter: int = 1000):
+    """
+    Run multiple genes.
+
+    :param plink_path: path to plink file
+    :param pheno_path:  path to pheno file
+    :param variant_path: path to variant file
+    :param gene: name of gene
+    :param models: Tuple with model names
+    :param n_iter: max. number of iterations
+    :return: array with the results
+    """
     mm = Models(plink_path, pheno_path, variant_path, models)
     return mm.run_gene(gene, n_iter)
 
@@ -112,6 +167,15 @@ class KSBurden(object):
     def run_models(self, n_threads: int = 1,
                    models: Tuple[str] = ('ks', 'burden', 'cmc'),
                    genes=None, n_iter: int = 1000) -> pd.DataFrame:
+        """
+        Run Models.
+
+        :param n_threads: number of threads
+        :param models: tumple of models
+        :param genes: list of genes, if none all genes are used
+        :param n_iter: number of maximal iteration for MC
+        :return: DataFrame with the results
+        """
         if genes is None:
             genes = self.genes
         else:
@@ -158,6 +222,12 @@ class KSBurden(object):
 
     @staticmethod
     def _get_null(percentile: float) -> Tuple[float, float]:
+        """
+        Compute the null distribution for two p-values.
+
+        :param percentile: critical p-value threshold
+        :return: critical values for first and second test.
+        """
         lg.debug('Percentile for KS-Burden: %s', percentile)
         n_tests = 2
         large_l = 1000
@@ -176,6 +246,13 @@ class KSBurden(object):
 
     @staticmethod
     def _fisher_combination(p1: float, p2: float):
+        """
+        Fisher's Method to combine p-values.
+
+        :param p1: value of first p-value
+        :param p2: value of second p-value
+        :return: float object of the combined p-value
+        """
         chi = -2*(np.log(p1) + np.log(p2))
         return 1-chi2.cdf(chi, df=4)
 
